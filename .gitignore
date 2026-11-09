@@ -12,3 +12,6 @@ __pycache__/
 
 # Логи
 /logs/*
+
+# Шаблон
+/.README.md
