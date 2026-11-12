@@ -6,6 +6,7 @@
 __pycache__/
 *.py[cod]
 .venv/
+spark_jobs/jars/*.jar
 
 # данные
 /data/*

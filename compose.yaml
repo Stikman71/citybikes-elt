@@ -93,5 +93,49 @@ services:
       retries: 12
       start_period: 40s
 
+  namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    hostname: namenode
+    restart: unless-stopped
+    environment:
+      CLUSTER_NAME: citybikes
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_replication: "1"
+      HDFS_CONF_dfs_permissions_enabled: "false"
+    ports:
+      - "127.0.0.1:19870:50070"
+    volumes:
+      - hdfs_namenode:/hadoop/dfs/name
+
+  datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    hostname: datanode
+    restart: unless-stopped
+    environment:
+      CORE_CONF_fs_defaultFS: hdfs://namenode:9000
+      HDFS_CONF_dfs_replication: "1"
+      HDFS_CONF_dfs_permissions_enabled: "false"
+      SERVICE_PRECONDITION: "namenode:50070"
+    volumes:
+      - hdfs_datanode:/hadoop/dfs/data
+    depends_on:
+      - namenode
+
+  spark:
+    image: apache/spark:3.5.5-scala2.12-java11-python3-ubuntu
+    hostname: spark
+    restart: unless-stopped
+    entrypoint: ["python3", "-u", "/opt/spark/work-dir/spark_server.py"]
+    environment:
+      SPARK_LOCAL_HOSTNAME: spark
+      PYTHONPATH: /opt/spark/work-dir
+    volumes:
+      - ./spark_jobs:/opt/spark/work-dir:ro
+    depends_on:
+      - namenode
+      - datanode
+
 volumes:
   postgres_data:
+  hdfs_namenode:
+  hdfs_datanode:

@@ -8,19 +8,19 @@ Python, Airflow, Docker, SQL, Spark, Hadoop, Metabase, Git
 
 ## Текущее состояние
 
-Созданы таблицы для хранения сырых данных CityBikes и реализовано их заполнение через Airflow.
+Реализована загрузка сырых данных CityBikes в PostgreSQL через Airflow. Spark создает One Big Table из RAW и сохраняет в HDFS в формате Parquet. Запуск обработки выполняется отдельным DAG Airflow
 
-## Файлы проекта
+## Добавленные файлы проекта
 
-- `sql/init/create-databases.sql` - иницилизация базы данных `citybikes` и `airflow` и пользователей для них
-- `sql/citybikes_raw.sql` - описание структуры таблиц для сырых данных
-- `compose.yaml` - настройки запуска контейнеров; добавлено подключение каталогов `src` и `sql` для Airflow
-- `src/citybikes_raw.py` - чтение JSON и загрузка данных в PostgreSQL
-- `dags/load_citybikes_raw.py` - DAG загрузки и проверки данных
+- `compose.yaml` - запуск PostgreSQL, Airflow, Spark и Hadoop HDFS; подключение каталогов проекта
+- `spark_jobs/prepare_spark_obt.py` - преобразование RAW-таблиц в One Big Table
+- `spark_jobs/create_spark_session_obt.py` - чтение PostgreSQL через Spark и запись Parquet в HDFS
+- `spark_jobs/spark_server.py` - запуск Spark-задачи по запросу от Airflow
+- `dags/load_citybikes_obt.py` - DAG формирования витрины в HDFS
 
 ## Описание данных
 
-Исходные JSON-файлы в Git не добавлены. Для запуска их необходимо разместить в `data/`:
+Исходные JSON-файлы в Git не добавляются. Для запуска их необходимо разместить в `data/`:
 
 - `data/networks.json` - список велосипедных сетей
 - `data/stations_output/` - JSON-файлы со станциями сетей
@@ -33,8 +33,25 @@ Python, Airflow, Docker, SQL, Spark, Hadoop, Metabase, Git
 sudo docker compose up -d --wait
 ```
 
-## Проверка
+Для Spark необходим PostgreSQL JDBC-драйвер:
 
 ```bash
-sudo docker compose exec postgres psql -U postgres -d postgres -c "SELECT datname FROM pg_database WHERE datname IN ('airflow', 'citybikes') ORDER BY datname;"
+mkdir -p spark_jobs/jars
+curl -fL --retry 3 -o spark_jobs/jars/postgresql-42.7.14.jar \
+  https://repo.maven.apache.org/maven2/org/postgresql/postgresql/42.7.14/postgresql-42.7.14.jar
+```
+
+Перед запуском DAG `citybikes_obt` создать каталог в HDFS (опционально):
+
+```bash
+sudo docker compose exec namenode hdfs dfs -mkdir -p /citybikes
+```
+
+DAG `citybikes_raw` и `citybikes_obt` запускаются вручную через Airflow
+
+## Проверка
+Проверка сохранёных данных HDFS:
+
+```bash
+sudo docker compose exec namenode hdfs dfs -ls /citybikes
 ```
