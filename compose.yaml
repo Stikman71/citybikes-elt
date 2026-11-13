@@ -122,7 +122,9 @@ services:
       - namenode
 
   spark:
-    image: apache/spark:3.5.5-scala2.12-java11-python3-ubuntu
+    image: citybikes-spark:3.5.5-clickhouse
+    build:
+      context: ./docker/spark
     hostname: spark
     restart: unless-stopped
     entrypoint: ["python3", "-u", "/opt/spark/work-dir/spark_server.py"]
@@ -134,8 +136,22 @@ services:
     depends_on:
       - namenode
       - datanode
+  clickhouse:
+    image: clickhouse:26.8.36.3
+    restart: unless-stopped
+    environment:
+      CLICKHOUSE_DB: citybikes
+      CLICKHOUSE_USER: citybikes
+      CLICKHOUSE_PASSWORD: "${CLICKHOUSE_PASSWORD:-}"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
 
 volumes:
   postgres_data:
   hdfs_namenode:
   hdfs_datanode:
+  clickhouse_data:

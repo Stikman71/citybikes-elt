@@ -4,54 +4,54 @@
 
 ## Стек технологий
 
-Python, Airflow, Docker, SQL, Spark, Hadoop, Metabase, Git
+Python, Airflow, Docker, SQL, PostgreSQL, Spark, Hadoop HDFS, ClickHouse, Metabase, Git
 
 ## Текущее состояние
 
-Реализована загрузка сырых данных CityBikes в PostgreSQL через Airflow. Spark создает One Big Table из RAW и сохраняет в HDFS в формате Parquet. Запуск обработки выполняется отдельным DAG Airflow
+DAG `citybikes_clickhouse` читает из `/my_user/dm` и загружает в таблицу `citybikes.citybikes_obt`. После сверки числа строк загрузчик заменяет рабочую таблицу. Повторный запуск не дописывает строки к предыдущей загрузке
 
-## Добавленные файлы проекта
+## Новые файлы задания 3
 
-- `compose.yaml` - запуск PostgreSQL, Airflow, Spark и Hadoop HDFS; подключение каталогов проекта
-- `spark_jobs/prepare_spark_obt.py` - преобразование RAW-таблиц в One Big Table
-- `spark_jobs/create_spark_session_obt.py` - чтение PostgreSQL через Spark и запись Parquet в HDFS
-- `spark_jobs/spark_server.py` - запуск Spark-задачи по запросу от Airflow
-- `dags/load_citybikes_obt.py` - DAG формирования витрины в HDFS
+- `docker/spark/Dockerfile` -сборка образа Spark с драйвером `clickhouse-connect`
+- `spark_jobs/load_citybikes_clickhouse.py` - чтение Parquet и загрузка в ClickHouse
+- `dags/load_citybikes_clickhouse.py` - запуск загрузки из Airflow
 
 ## Описание данных
 
-Исходные JSON-файлы в Git не добавляются. Для запуска их необходимо разместить в `data/`:
+Исходные JSON-файлы в Git не добавляются. Для загрузки в PostgreSQL размести их в `data/`:
 
-- `data/networks.json` - список велосипедных сетей
-- `data/stations_output/` - JSON-файлы со станциями сетей
+- `data/networks.json` — список велосипедных сетей.
+- `data/stations_output/` — JSON-файлы со станциями сетей.
 
 ## Запуск
 
-Из корня проекта:
+Команды выполняются из корня проекта
+
+Для сборки Spark с драйвером ClickHouse нужны пакеты в `docker/spark/wheels/`
 
 ```bash
+mkdir -p docker/spark/wheels
+sudo docker run --rm --user "$(id -u):$(id -g)" --entrypoint python3 \
+  -v "$PWD/docker/spark/wheels:/wheels" \
+  apache/spark:3.5.5-scala2.12-java11-python3-ubuntu \
+  -m pip download --dest /wheels --find-links /wheels \
+  --no-cache-dir --only-binary=:all: --timeout 60 --retries 5 \
+  clickhouse-connect==0.8.18
+```
+
+Сборка образа Spark
+
+```bash
+sudo docker compose build spark
 sudo docker compose up -d --wait
 ```
 
-Для Spark необходим PostgreSQL JDBC-драйвер:
-
-```bash
-mkdir -p spark_jobs/jars
-curl -fL --retry 3 -o spark_jobs/jars/postgresql-42.7.14.jar \
-  https://repo.maven.apache.org/maven2/org/postgresql/postgresql/42.7.14/postgresql-42.7.14.jar
-```
-
-Перед запуском DAG `citybikes_obt` создать каталог в HDFS (опционально):
-
-```bash
-sudo docker compose exec namenode hdfs dfs -mkdir -p /citybikes
-```
-
-DAG `citybikes_raw` и `citybikes_obt` запускаются вручную через Airflow
-
 ## Проверка
-Проверка сохранёных данных HDFS:
+
+Проверка числоа строк в ClickHouse
 
 ```bash
-sudo docker compose exec namenode hdfs dfs -ls /citybikes
+sudo docker compose exec -T clickhouse clickhouse-client \
+  --user citybikes \
+  --query 'SELECT count() FROM citybikes.citybikes_obt'
 ```

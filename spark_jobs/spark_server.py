@@ -13,6 +13,17 @@ SPARK_SUBMIT=[
     "/opt/spark/work-dir/create_spark_session_obt.py",
 ]
 
+SPARK_SUBMIT_CLICKHOUSE=[
+    "/opt/spark/bin/spark-submit",
+    "--master", "local[2]",
+    "/opt/spark/work-dir/load_citybikes_clickhouse.py",
+]
+
+JOBS={
+    "/run-obt": SPARK_SUBMIT,
+    "/run-clickhouse": SPARK_SUBMIT_CLICKHOUSE,
+}
+
 
 class SparkRunner(BaseHTTPRequestHandler):
 
@@ -34,18 +45,20 @@ class SparkRunner(BaseHTTPRequestHandler):
 
     def do_POST(self):
         """Обработка POST-запросов"""
-        if self.path=="/run-obt":
-            self.run_obt()
-        else:
+        # Выбирает Spark-задачу по адресу запроса
+        task=JOBS.get(self.path)
+        if task is None:
             self._reply(404, "not found")
+            return
+        self.run_job(task)
 
 
 
-    def run_obt(self):
+    def run_job(self,task):
         """Запуск spark для формирования obt"""
         try:
             res=subprocess.run(
-                SPARK_SUBMIT,
+                task,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
                 text=True,

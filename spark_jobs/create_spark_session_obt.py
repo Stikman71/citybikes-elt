@@ -13,7 +13,7 @@ JDBC_URL="jdbc:postgresql://postgres:5432/citybikes"
 PG_USER="citybikes"
 
 # настройка hdfs
-HDFS_PATH="hdfs://namenode:9000/citybikes"
+HDFS_PATH="hdfs://namenode:9000/my_user/dm"
 
 
 def read_raw(spark: SparkSession, query: str):
