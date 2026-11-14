@@ -150,6 +150,21 @@ services:
         soft: 262144
         hard: 262144
 
+  metabase:
+    image: metabase/metabase:v0.65.4.x
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_HOST: postgres
+      MB_DB_PORT: "5432"
+      MB_DB_DBNAME: metabase
+      MB_DB_USER: metabase
+    depends_on:
+      postgres:
+        condition: service_healthy
+
 volumes:
   postgres_data:
   hdfs_namenode:
