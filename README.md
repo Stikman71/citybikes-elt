@@ -11,7 +11,7 @@ Python, Airflow, Docker, SQL, PostgreSQL, Spark, Hadoop HDFS, ClickHouse, Metaba
 `citybikes_obt` - Запускает Spark обьединяет сети и станции по идентификатору сети. Записывает Parquet в `hdfs://namenode:9000/my_user/dm`
 `citybikes_clickhouse` - Запускает Spark для чтения Parquet. Загрузчик сверяет число строк и заменяет витрину в ClickHouse без повторного добавления тех же данных
 
-
+![Диаграмма работы](shema.png)
 
 ## Файлы проекта
 
