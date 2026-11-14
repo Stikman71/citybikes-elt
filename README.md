@@ -15,15 +15,15 @@ Python, Airflow, Docker, SQL, PostgreSQL, Spark, Hadoop HDFS, ClickHouse, Metaba
 
 ## Файлы проекта
 
-`compose.yaml` - Запуск сервисов и подключение каталогов проекта
-`dags/` - Три основных DAG и `check_citybikes` для проверки подключения
-`sql/init/create-databases.sql` - Инициализация баз PostgreSQL и базы сырых данных
-`sql/citybikes_raw.sql` и `src/citybikes_raw.py` - Схема RAW и загрузка сетей и станций
-`spark_jobs/prepare_spark_obt.py` - Преобразование данных и формирование One Big Table
-`spark_jobs/create_spark_session_obt.py` Чтение PostgreSQL через JDBC и сохранение Parquet в HDFS
-`spark_jobs/load_citybikes_clickhouse.py` - Чтение Parquet и загрузка в ClickHouse
-`spark_jobs/spark_server.py` Запуск Spark-задач по запросам из Airflow
-`docker/spark/Dockerfile` - Сборка образа Spark с `clickhouse-connect==0.8.18` из локальных пакетов
+* `compose.yaml` - Запуск сервисов и подключение каталогов проекта
+* `dags/` - Три основных DAG и `check_citybikes` для проверки подключения
+* `sql/init/create-databases.sql` - Инициализация баз PostgreSQL и базы сырых данных
+* `sql/citybikes_raw.sql` и `src/citybikes_raw.py` - Схема RAW и загрузка сетей и станций
+* `spark_jobs/prepare_spark_obt.py` - Преобразование данных и формирование One Big Table
+* `spark_jobs/create_spark_session_obt.py` Чтение PostgreSQL через JDBC и сохранение Parquet в HDFS
+* `spark_jobs/load_citybikes_clickhouse.py` - Чтение Parquet и загрузка в ClickHouse
+* `spark_jobs/spark_server.py` Запуск Spark-задач по запросам из Airflow
+* `docker/spark/Dockerfile` - Сборка образа Spark с `clickhouse-connect==0.8.18` из локальных пакетов
 
 ## Запуск
 
